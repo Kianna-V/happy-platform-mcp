@@ -82,8 +82,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Publish to npm (Trusted Publishing via OIDC)
+      - name: Verify npm authentication
+        run: npm whoami
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish to npm (token auth with provenance)
         run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
