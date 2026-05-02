@@ -12,6 +12,8 @@ import path from 'path';
 import { configManager } from './config-manager.js';
 import { syncScript, syncAllScripts, SCRIPT_TYPES } from './script-sync.js';
 import { parseNaturalLanguage, getSupportedPatterns } from './natural-language.js';
+import { docsToolDefinitions } from './docs/tool-definitions.js';
+import { handleDocsTool } from './docs/tool-handlers.js';
 
 export async function createMcpServer(serviceNowClient) {
   const server = new Server(
@@ -1354,7 +1356,8 @@ export async function createMcpServer(serviceNowClient) {
             }
           }
         }
-      }
+      },
+      ...docsToolDefinitions
     ];
 
     console.error(`✅ Returning ${tools.length} consolidated tools to Claude Code`);
@@ -1365,6 +1368,10 @@ export async function createMcpServer(serviceNowClient) {
     const { name, arguments: args } = request.params;
 
     try {
+      if (name.startsWith('SN-Docs-')) {
+        return await handleDocsTool(name, args);
+      }
+
       switch (name) {
         case 'SN-Set-Instance': {
           const { instance_name } = args;
