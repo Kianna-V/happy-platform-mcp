@@ -33,6 +33,7 @@ Thumbs.db
 # Build output
 dist/
 build/
+.worktrees/
 
 # Test coverage
 coverage/
