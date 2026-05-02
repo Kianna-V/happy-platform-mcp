@@ -4,6 +4,7 @@ import { getDocsConfig } from './config.js';
 import { createServiceNowDocsClient } from './github-client.js';
 import { createDocsStore } from './sqlite-store.js';
 import { syncDocsFamily } from './sync.js';
+import { createVectorIndex } from './vector-index.js';
 
 function jsonContent(payload) {
   return {
@@ -33,10 +34,13 @@ export async function handleDocsTool(name, args = {}, deps = {}) {
 
     case 'SN-Docs-Status': {
       const store = await createStore(config);
+      const vector = createVectorIndex(config);
       try {
         return jsonContent({
           cacheDir: config.cacheDir,
-          ...store.status()
+          ...store.status(),
+          vectorAvailable: vector.available,
+          vectorReason: vector.reason
         });
       } finally {
         store.close();
