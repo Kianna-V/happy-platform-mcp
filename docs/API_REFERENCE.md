@@ -2,7 +2,7 @@
 
 **Version:** 2.2
 **Last Updated:** 2026-04-19
-**Total Tools:** 48
+**Total Tools:** 53
 
 Complete reference for all MCP tools and resources available in the ServiceNow server.
 
@@ -21,8 +21,9 @@ Complete reference for all MCP tools and resources available in the ServiceNow s
 9. [Schema & Discovery](#schema--discovery)
 10. [Batch Operations](#batch-operations)
 11. [Service Catalog AI-Submission Tools](#service-catalog-ai-submission-tools)
-12. [MCP Resources](#mcp-resources)
-13. [Multi-Instance Support](#multi-instance-support)
+12. [ServiceNow Docs Search Tools](#servicenow-docs-search-tools)
+13. [MCP Resources](#mcp-resources)
+14. [Multi-Instance Support](#multi-instance-support)
 
 ---
 
@@ -57,6 +58,9 @@ Efficient multi-record operations
 
 ### 🛒 **Service Catalog AI-Submission** (4 tools)
 Browse, inspect, and submit Service Catalog forms programmatically
+
+### 📚 **ServiceNow Docs Search** (5 tools)
+Discover, sync, search, and retrieve official ServiceNowDocs markdown
 
 ### 🔌 **Instance Management** (2 tools)
 Multi-instance configuration and switching
@@ -1120,6 +1124,13 @@ ServiceNow enforces rate limits on API calls:
 - `SN-Catalog-Get-Item` - Full form context for a catalog item or record producer
 - `SN-Catalog-Submit` - Submit a completed catalog form
 
+### ServiceNow Docs Search (5 tools)
+- `SN-Docs-Families` - List available ServiceNowDocs families/releases
+- `SN-Docs-Status` - Show local docs cache, FTS, and vector status
+- `SN-Docs-Sync` - Download and index a docs family locally
+- `SN-Docs-Search` - Search locally synced ServiceNowDocs markdown
+- `SN-Docs-Get` - Retrieve a markdown document from local cache or GitHub
+
 ---
 
 ## Service Catalog AI-Submission Tools
@@ -1275,6 +1286,85 @@ Submits a completed Service Catalog form via the ServiceNow Service Catalog REST
 ```
 
 **Returns:** The `result` object from ServiceNow's `/api/sn_sc/servicecatalog/items/{sys_id}/order_now` response, which includes the resulting `sc_request` number and related record sys_ids.
+
+---
+
+## ServiceNow Docs Search Tools
+
+These tools use the official `ServiceNow/ServiceNowDocs` markdown repository as the source of truth. Local sync is optional and builds a SQLite FTS5 index under `~/.happy-platform-mcp/docs/servicenow` by default. Vector mode is opt-in and disabled unless configured.
+
+### SN-Docs-Families
+
+Lists available ServiceNow documentation families/releases from GitHub.
+
+**Parameters:**
+```javascript
+{}
+```
+
+**Returns:** Array of `{ name, branch }` family records.
+
+---
+
+### SN-Docs-Status
+
+Shows local docs cache and index status.
+
+**Parameters:**
+```javascript
+{}
+```
+
+**Returns:** Cache path, synced families, FTS availability, vector availability, and vector reason when disabled.
+
+---
+
+### SN-Docs-Sync
+
+Downloads and indexes a ServiceNowDocs family into the local SQLite FTS cache.
+
+**Parameters:**
+```javascript
+{
+  "family": "latest",      // Required: family name
+  "branch": "latest"       // Optional: GitHub branch, defaults to family
+}
+```
+
+**Returns:** Sync summary including family, branch, and document count.
+
+---
+
+### SN-Docs-Search
+
+Searches locally synced ServiceNowDocs markdown using SQLite FTS5.
+
+**Parameters:**
+```javascript
+{
+  "query": "create a Flow Designer action", // Required
+  "family": "latest",                       // Optional
+  "limit": 10                               // Optional
+}
+```
+
+**Returns:** Matching chunks with family, path, title, heading, line range, and snippet. If no local results exist, run `SN-Docs-Sync` for the target family.
+
+---
+
+### SN-Docs-Get
+
+Retrieves a ServiceNowDocs markdown document by family and path. Reads from the local cache first, then falls back to GitHub raw markdown.
+
+**Parameters:**
+```javascript
+{
+  "family": "latest",
+  "path": "platform/example.md"
+}
+```
+
+**Returns:** Document source (`local-cache` or `github`) and markdown content.
 
 ---
 

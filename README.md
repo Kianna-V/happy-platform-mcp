@@ -42,13 +42,14 @@
 - **OAuth 2.0 & Basic Auth** — Per-instance authentication with Resource Owner Password Credentials grant, automatic token refresh, and seamless fallback
 - **Intelligent Schema Discovery** — Automatically discovers table structures and relationships at runtime
 - **160+ Tables** — Complete coverage including ITSM, CMDB, Service Catalog, Platform Development, and Flow Designer
-- **48 MCP Tools** — Generic CRUD operations that work on any table, plus specialized convenience tools
+- **53 MCP Tools** — Generic CRUD operations that work on any table, plus specialized convenience tools
 - **Batch Operations** — 43+ parallel operations tested successfully
 - **Local Script Development** — Sync scripts with Git, watch mode for continuous development
 - **Natural Language Search** — Query using plain English instead of encoded queries
 - **MCP Resources** — 8 read-only resource URIs for quick lookups and documentation
 - **Background Script Execution** — Automated server-side script execution via `sys_trigger`
 - **Service Catalog AI-Submission** — Browse, inspect, and submit Service Catalog forms programmatically
+- **ServiceNow Docs Search** — Optional GitHub-backed docs retrieval and local SQLite FTS search over official ServiceNowDocs markdown
 
 ## Quick Start
 
@@ -163,6 +164,7 @@ SN-List-Incidents({ "instance": "prod", "limit": 10 })
 | **Batch** | 2 | Batch create/update across tables |
 | **Schema** | 3 | Table schemas, field info, relationships |
 | **Service Catalog** | 4 | Browse, inspect, and submit catalog forms |
+| **ServiceNow Docs** | 5 | Discover, sync, search, and retrieve official ServiceNowDocs markdown |
 | **Resources** | 8 | Read-only URIs for table lists, field info |
 
 ### Examples
@@ -190,6 +192,11 @@ SN-Batch-Update({ "updates": [{ "table": "incident", "sys_id": "id1", "data": {.
 SN-Catalog-Search-Items({ "keyword": "VPN access" })
 SN-Catalog-Get-Item({ "sys_id": "<catalog_item_sys_id>" })
 SN-Catalog-Submit({ "sys_id": "<catalog_item_sys_id>", "variables": { "requested_for": "jsmith", "justification": "Project X" } })
+
+// ServiceNow Docs local search workflow
+SN-Docs-Families({})
+SN-Docs-Sync({ "family": "latest" })
+SN-Docs-Search({ "query": "create a Flow Designer action", "family": "latest" })
 ```
 
 ### Local Script Development
@@ -220,6 +227,20 @@ SN-NL-Search({
 ```
 
 Supports 15+ patterns including field comparisons, text searches, date ranges, logical operators, and ordering.
+
+### ServiceNow Docs Search
+
+Happy MCP can retrieve official ServiceNowDocs markdown directly from GitHub and optionally localize a docs family into a SQLite FTS5 index for fast local search.
+
+```javascript
+SN-Docs-Families({})
+SN-Docs-Status({})
+SN-Docs-Sync({ "family": "latest" })
+SN-Docs-Search({ "query": "update set best practices", "family": "latest", "limit": 5 })
+SN-Docs-Get({ "family": "latest", "path": "platform/example.md" })
+```
+
+Vector search is optional and disabled by default. See [ServiceNow Docs Search](docs/SERVICENOW_DOCS_SEARCH.md).
 
 ## Claude Desktop Integration
 
