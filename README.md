@@ -230,7 +230,7 @@ Supports 15+ patterns including field comparisons, text searches, date ranges, l
 
 ### ServiceNow Docs Search
 
-Happy MCP can retrieve official ServiceNowDocs markdown directly from GitHub and optionally localize a docs family into a SQLite FTS5 index for fast local search.
+Happy MCP can retrieve official ServiceNowDocs markdown directly from GitHub and optionally localize a docs family into a SQLite FTS5 index for fast local search. Local indexing is disabled by default; enable it with `docs.localIndexEnabled=true` in `config/servicenow-instances.json` or `HAPPY_DOCS_ENABLE_LOCAL_INDEX=true`.
 
 ```javascript
 SN-Docs-Families({})
@@ -240,7 +240,7 @@ SN-Docs-Search({ "query": "update set best practices", "family": "latest", "limi
 SN-Docs-Get({ "family": "latest", "path": "platform/example.md" })
 ```
 
-Vector search is optional and disabled by default. See [ServiceNow Docs Search](docs/SERVICENOW_DOCS_SEARCH.md).
+SQLite local indexing and vector search are optional and disabled by default. See [ServiceNow Docs Search](docs/SERVICENOW_DOCS_SEARCH.md).
 
 ## Claude Desktop Integration
 

@@ -1,4 +1,5 @@
 import os from 'os';
+import fs from 'fs';
 import path from 'path';
 import { describe, expect, test, beforeEach, afterEach } from '@jest/globals';
 import {
@@ -22,15 +23,42 @@ describe('docs config', () => {
     delete process.env.HAPPY_DOCS_CACHE_DIR;
     const config = getDocsConfig();
     expect(config.cacheDir).toBe(path.join(os.homedir(), '.happy-platform-mcp', 'docs', 'servicenow'));
+    expect(config.localIndexEnabled).toBe(false);
     expect(config.enableVector).toBe(false);
   });
 
   test('allows cache directory and vector flag through env vars', () => {
     process.env.HAPPY_DOCS_CACHE_DIR = '/tmp/happy-docs';
+    process.env.HAPPY_DOCS_ENABLE_LOCAL_INDEX = 'true';
     process.env.HAPPY_DOCS_ENABLE_VECTOR = 'true';
     const config = getDocsConfig();
     expect(config.cacheDir).toBe('/tmp/happy-docs');
+    expect(config.localIndexEnabled).toBe(true);
     expect(config.enableVector).toBe(true);
+  });
+
+  test('loads docs system properties from the local config file', () => {
+    const configPath = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'happy-docs-config-')), 'config.json');
+    fs.writeFileSync(configPath, JSON.stringify({
+      docs: {
+        cacheDir: '/tmp/from-config',
+        localIndexEnabled: true,
+        enableVector: true,
+        embeddingProvider: 'local',
+        githubToken: 'from-config'
+      }
+    }));
+    process.env.HAPPY_CONFIG_PATH = configPath;
+
+    const config = getDocsConfig();
+
+    expect(config).toMatchObject({
+      cacheDir: '/tmp/from-config',
+      localIndexEnabled: true,
+      enableVector: true,
+      embeddingProvider: 'local',
+      githubToken: 'from-config'
+    });
   });
 
   test('rejects path traversal for relative docs paths', () => {

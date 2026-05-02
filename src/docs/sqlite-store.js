@@ -1,7 +1,33 @@
-import Database from 'better-sqlite3';
+let databaseModulePromise;
 
-export function createDocsStore(dbPath) {
-  const db = new Database(dbPath);
+async function loadBetterSqlite3() {
+  if (!databaseModulePromise) {
+    databaseModulePromise = import('better-sqlite3');
+  }
+
+  try {
+    const module = await databaseModulePromise;
+    return module.default || module;
+  } catch (error) {
+    throw new Error(
+      `Local ServiceNow docs search requires optional dependency better-sqlite3. ` +
+      `Install optional dependencies or run npm install better-sqlite3 to enable SN-Docs-Sync and SN-Docs-Search. Original error: ${error.message}`
+    );
+  }
+}
+
+export async function getSqliteAvailability() {
+  try {
+    await loadBetterSqlite3();
+    return { available: true };
+  } catch (error) {
+    return { available: false, reason: error.message };
+  }
+}
+
+export async function createDocsStore(dbPath, { Database = null } = {}) {
+  const DatabaseCtor = Database || await loadBetterSqlite3();
+  const db = new DatabaseCtor(dbPath);
 
   return {
     initialize() {

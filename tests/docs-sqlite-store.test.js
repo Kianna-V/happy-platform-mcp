@@ -12,7 +12,7 @@ beforeEach(async () => {
 
 describe('docs sqlite store', () => {
   test('indexes and searches chunks with FTS5', async () => {
-    const store = createDocsStore(path.join(tempDir, 'index.sqlite'));
+    const store = await createDocsStore(path.join(tempDir, 'index.sqlite'));
     store.initialize();
     store.upsertFamily({ name: 'australia', branch: 'australia', syncedAt: '2026-05-02T00:00:00Z' });
     store.replaceDocument({
@@ -42,8 +42,8 @@ describe('docs sqlite store', () => {
     });
   });
 
-  test('reports status', () => {
-    const store = createDocsStore(path.join(tempDir, 'index.sqlite'));
+  test('reports status', async () => {
+    const store = await createDocsStore(path.join(tempDir, 'index.sqlite'));
     store.initialize();
     expect(store.status()).toMatchObject({ ftsAvailable: true, vectorAvailable: false });
   });

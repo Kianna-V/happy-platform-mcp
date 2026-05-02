@@ -25,7 +25,7 @@ export async function syncDocsFamily({ family, branch, cacheDir, client }) {
   await fs.mkdir(familyDir, { recursive: true });
 
   const dbPath = path.join(cacheDir, 'index.sqlite');
-  const store = createDocsStore(dbPath);
+  const store = await createDocsStore(dbPath);
   store.initialize();
 
   const llms = await client.getLlms(branch);

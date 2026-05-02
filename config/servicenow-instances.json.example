@@ -1,4 +1,10 @@
 {
+  "docs": {
+    "localIndexEnabled": false,
+    "cacheDir": "~/.happy-platform-mcp/docs/servicenow",
+    "enableVector": false,
+    "embeddingProvider": "none"
+  },
   "instances": [
     {
       "name": "dev",
