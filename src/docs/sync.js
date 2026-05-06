@@ -20,12 +20,12 @@ export function parseMarkdownLinks(llmsText) {
   return links;
 }
 
-export async function syncDocsFamily({ family, branch, cacheDir, client }) {
+export async function syncDocsFamily({ family, branch, cacheDir, client, vectorConfig = null }) {
   const familyDir = resolveDocsCachePath(cacheDir, family);
   await fs.mkdir(familyDir, { recursive: true });
 
   const dbPath = path.join(cacheDir, 'index.sqlite');
-  const store = await createDocsStore(dbPath);
+  const store = await createDocsStore(dbPath, { vectorConfig });
   store.initialize();
 
   const llms = await client.getLlms(branch);

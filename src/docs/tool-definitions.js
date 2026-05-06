@@ -15,10 +15,9 @@ export const docsToolDefinitions = [
     inputSchema: {
       type: 'object',
       properties: {
-        family: { type: 'string', description: 'Docs family to sync, such as latest or australia.' },
+        family: { type: 'string', description: 'Docs family to sync, such as australia. Defaults to australia.' },
         branch: { type: 'string', description: 'Optional GitHub branch. Defaults to the same value as family.' }
-      },
-      required: ['family']
+      }
     }
   },
   {
@@ -28,7 +27,7 @@ export const docsToolDefinitions = [
       type: 'object',
       properties: {
         query: { type: 'string', description: 'Search query.' },
-        family: { type: 'string', description: 'Optional docs family filter.' },
+        family: { type: 'string', description: 'Optional docs family filter. Defaults to australia.' },
         limit: { type: 'number', description: 'Maximum results to return.', default: 10 }
       },
       required: ['query']
@@ -40,10 +39,10 @@ export const docsToolDefinitions = [
     inputSchema: {
       type: 'object',
       properties: {
-        family: { type: 'string', description: 'Docs family, such as latest or australia.' },
+        family: { type: 'string', description: 'Docs family, such as australia. Defaults to australia.' },
         path: { type: 'string', description: 'Markdown path inside the docs family.' }
       },
-      required: ['family', 'path']
+      required: ['path']
     }
   }
 ];

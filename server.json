@@ -6,12 +6,12 @@
     "url": "https://github.com/Happy-Technologies-LLC/happy-platform-mcp",
     "source": "github"
   },
-  "version": "3.1.2",
+  "version": "3.2.1",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "happy-platform-mcp",
-      "version": "3.1.2",
+      "version": "3.2.1",
       "transport": {
         "type": "stdio"
       },
@@ -50,6 +50,41 @@
           "format": "string",
           "isSecret": false,
           "name": "SERVICENOW_INSTANCE"
+        },
+        {
+          "description": "Enable optional local SQLite FTS indexing for ServiceNowDocs search",
+          "isRequired": false,
+          "format": "boolean",
+          "isSecret": false,
+          "name": "HAPPY_DOCS_ENABLE_LOCAL_INDEX"
+        },
+        {
+          "description": "Directory for cached ServiceNowDocs markdown and SQLite index",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "name": "HAPPY_DOCS_CACHE_DIR"
+        },
+        {
+          "description": "Enable optional ServiceNowDocs vector search when local indexing, sqlite-vec, and an embedding provider are available.",
+          "isRequired": false,
+          "format": "boolean",
+          "isSecret": false,
+          "name": "HAPPY_DOCS_ENABLE_VECTOR"
+        },
+        {
+          "description": "Embedding provider for ServiceNowDocs vector search. Use local for deterministic local embeddings or none to disable embeddings.",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "name": "HAPPY_DOCS_EMBEDDING_PROVIDER"
+        },
+        {
+          "description": "Optional GitHub token for higher ServiceNowDocs repository rate limits",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": true,
+          "name": "GITHUB_TOKEN"
         }
       ]
     }

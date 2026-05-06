@@ -47,4 +47,47 @@ describe('docs sqlite store', () => {
     store.initialize();
     expect(store.status()).toMatchObject({ ftsAvailable: true, vectorAvailable: false });
   });
+
+  test('indexes and searches chunks with sqlite-vec when vector mode is enabled', async () => {
+    const store = await createDocsStore(path.join(tempDir, 'vector.sqlite'), {
+      vectorConfig: {
+        enableVector: true,
+        embeddingProvider: 'local'
+      }
+    });
+    store.initialize();
+
+    if (!store.status().vectorAvailable) {
+      store.close();
+      return;
+    }
+
+    store.upsertFamily({ name: 'australia', branch: 'australia', syncedAt: '2026-05-02T00:00:00Z' });
+    store.replaceDocument({
+      family: 'australia',
+      path: 'vector.md',
+      sha: 'abc',
+      title: 'Flow Designer',
+      markdown: '# Flow Designer\n\nCreate reusable flow actions.'
+    }, [
+      {
+        family: 'australia',
+        path: 'vector.md',
+        title: 'Flow Designer',
+        heading: 'Flow Designer',
+        startLine: 1,
+        endLine: 3,
+        body: '# Flow Designer\n\nCreate reusable flow actions.'
+      }
+    ]);
+
+    const results = store.search({ query: 'reusable flow actions', family: 'australia', limit: 5 });
+    expect(results[0]).toMatchObject({
+      family: 'australia',
+      path: 'vector.md',
+      title: 'Flow Designer'
+    });
+    expect(results[0].vectorDistance).toEqual(expect.any(Number));
+    store.close();
+  });
 });

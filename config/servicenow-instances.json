@@ -1,1 +1,26 @@
-{\n  "instances": [\n    {\n      "url": "{{DEV_INSTANCE_URL}}",\n      "username": "{{DEV_USERNAME}}",\n      "password": "{{DEV_PASSWORD}}"\n    },\n    {\n      "url": "{{PROD_INSTANCE_URL}}",\n      "username": "{{PROD_USERNAME}}",\n      "password": "{{PROD_PASSWORD}}"\n    }\n  ]\n}
+{
+  "docs": {
+    "localIndexEnabled": false,
+    "cacheDir": "~/.happy-platform-mcp/docs/servicenow",
+    "enableVector": false,
+    "embeddingProvider": "none"
+  },
+  "instances": [
+    {
+      "name": "dev",
+      "url": "https://your-dev-instance.service-now.com",
+      "username": "your_dev_username",
+      "password": "your_dev_password",
+      "default": true,
+      "description": "Development instance"
+    },
+    {
+      "name": "prod",
+      "url": "https://your-prod-instance.service-now.com",
+      "username": "your_prod_username",
+      "password": "your_prod_password",
+      "default": false,
+      "description": "Production instance"
+    }
+  ]
+}

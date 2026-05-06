@@ -6,6 +6,8 @@ import { createDocsStore, getSqliteAvailability } from './sqlite-store.js';
 import { syncDocsFamily } from './sync.js';
 import { createVectorIndex } from './vector-index.js';
 
+export const DEFAULT_DOCS_FAMILY = 'australia';
+
 function jsonContent(payload) {
   return {
     content: [{
@@ -17,7 +19,9 @@ function jsonContent(payload) {
 
 async function createStore(config) {
   await fs.mkdir(config.cacheDir, { recursive: true });
-  const store = await createDocsStore(path.join(config.cacheDir, 'index.sqlite'));
+  const store = await createDocsStore(path.join(config.cacheDir, 'index.sqlite'), {
+    vectorConfig: config
+  });
   store.initialize();
   return store;
 }
@@ -34,7 +38,7 @@ export async function handleDocsTool(name, args = {}, deps = {}) {
 
     case 'SN-Docs-Status': {
       const sqlite = await getSqliteAvailability();
-      const vector = createVectorIndex(config);
+      const vector = await createVectorIndex(config);
       if (!config.localIndexEnabled || !sqlite.available) {
         return jsonContent({
           cacheDir: config.cacheDir,
@@ -72,13 +76,14 @@ export async function handleDocsTool(name, args = {}, deps = {}) {
         });
       }
 
-      const family = args.family;
+      const family = args.family || DEFAULT_DOCS_FAMILY;
       const branch = args.branch || family;
       const result = await syncDocsFamily({
         family,
         branch,
         cacheDir: config.cacheDir,
-        client
+        client,
+        vectorConfig: config
       });
       return jsonContent(result);
     }
@@ -87,22 +92,23 @@ export async function handleDocsTool(name, args = {}, deps = {}) {
       if (!config.localIndexEnabled) {
         return jsonContent({
           query: args.query,
-          family: args.family || null,
+          family: args.family || DEFAULT_DOCS_FAMILY,
           results: [],
           message: 'Local ServiceNow docs search is disabled. Use SN-Docs-Get for direct GitHub retrieval, or set docs.localIndexEnabled=true / HAPPY_DOCS_ENABLE_LOCAL_INDEX=true and run SN-Docs-Sync.'
         });
       }
 
+      const family = args.family || DEFAULT_DOCS_FAMILY;
       const store = await createStore(config);
       try {
         const results = store.search({
           query: args.query,
-          family: args.family,
+          family,
           limit: args.limit || 10
         });
         return jsonContent({
           query: args.query,
-          family: args.family || null,
+          family,
           results,
           message: results.length > 0
             ? 'Found locally indexed ServiceNow documentation results.'
@@ -114,7 +120,7 @@ export async function handleDocsTool(name, args = {}, deps = {}) {
     }
 
     case 'SN-Docs-Get': {
-      const family = args.family;
+      const family = args.family || DEFAULT_DOCS_FAMILY;
       const documentPath = args.path;
       if (config.localIndexEnabled) {
         const store = await createStore(config);

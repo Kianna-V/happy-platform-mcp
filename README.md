@@ -195,8 +195,8 @@ SN-Catalog-Submit({ "sys_id": "<catalog_item_sys_id>", "variables": { "requested
 
 // ServiceNow Docs local search workflow
 SN-Docs-Families({})
-SN-Docs-Sync({ "family": "latest" })
-SN-Docs-Search({ "query": "create a Flow Designer action", "family": "latest" })
+SN-Docs-Sync({ "family": "australia" })
+SN-Docs-Search({ "query": "create a Flow Designer action", "family": "australia" })
 ```
 
 ### Local Script Development
@@ -235,12 +235,12 @@ Happy MCP can retrieve official ServiceNowDocs markdown directly from GitHub and
 ```javascript
 SN-Docs-Families({})
 SN-Docs-Status({})
-SN-Docs-Sync({ "family": "latest" })
-SN-Docs-Search({ "query": "update set best practices", "family": "latest", "limit": 5 })
-SN-Docs-Get({ "family": "latest", "path": "platform/example.md" })
+SN-Docs-Sync({ "family": "australia" })
+SN-Docs-Search({ "query": "update set best practices", "family": "australia", "limit": 5 })
+SN-Docs-Get({ "family": "australia", "path": "platform/example.md" })
 ```
 
-SQLite local indexing and vector search are optional and disabled by default. See [ServiceNow Docs Search](docs/SERVICENOW_DOCS_SEARCH.md).
+SQLite local indexing is optional and disabled by default. Vector search is also optional; enable local indexing, set `HAPPY_DOCS_ENABLE_VECTOR=true`, and use `HAPPY_DOCS_EMBEDDING_PROVIDER=local` to build a sqlite-vec index with deterministic local embeddings. See [ServiceNow Docs Search](docs/SERVICENOW_DOCS_SEARCH.md).
 
 ## Claude Desktop Integration
 

@@ -6,7 +6,7 @@ Happy MCP can search and retrieve the official ServiceNowDocs markdown repositor
 
 - **Live GitHub mode:** zero setup for family discovery and direct document fetches from `ServiceNow/ServiceNowDocs`.
 - **Local sync mode:** optional SQLite FTS5 index for fast local search and offline use. Disabled by default.
-- **Vector mode:** optional semantic search surface. It is disabled by default and requires a future sqlite-vec embedding configuration.
+- **Vector mode:** optional semantic search using sqlite-vec with deterministic local embeddings. It is disabled by default and requires local indexing.
 
 ## Configuration
 
@@ -14,7 +14,7 @@ Happy MCP can search and retrieve the official ServiceNowDocs markdown repositor
 HAPPY_DOCS_ENABLE_LOCAL_INDEX=false
 HAPPY_DOCS_CACHE_DIR=~/.happy-platform-mcp/docs/servicenow
 HAPPY_DOCS_ENABLE_VECTOR=false
-HAPPY_DOCS_EMBEDDING_PROVIDER=none
+HAPPY_DOCS_EMBEDDING_PROVIDER=none  # use local to enable deterministic local embeddings
 GITHUB_TOKEN=optional-token-for-higher-rate-limits
 ```
 
@@ -32,7 +32,7 @@ The same system properties can live in `config/servicenow-instances.json`:
 }
 ```
 
-`better-sqlite3` is an optional npm dependency. Live GitHub docs tools do not require it. Local sync/search requires optional dependencies to be installed and `localIndexEnabled` to be true.
+`better-sqlite3` and `sqlite-vec` are optional npm dependencies. Live GitHub docs tools do not require them. Local sync/search requires `better-sqlite3` and `localIndexEnabled=true`. Vector search additionally requires `enableVector=true` and `embeddingProvider=local`; when sqlite-vec is unavailable, status reports the reason and FTS search continues to work.
 
 ## Tools
 
@@ -47,14 +47,15 @@ The same system properties can live in `config/servicenow-instances.json`:
 ```javascript
 SN-Docs-Families({})
 // Enable local indexing first: docs.localIndexEnabled=true or HAPPY_DOCS_ENABLE_LOCAL_INDEX=true
-SN-Docs-Sync({ "family": "latest" })
-SN-Docs-Search({ "query": "create a Flow Designer action", "family": "latest" })
-SN-Docs-Get({ "family": "latest", "path": "platform/some-page.md" })
+SN-Docs-Sync({ "family": "australia" })
+SN-Docs-Search({ "query": "create a Flow Designer action", "family": "australia" })
+SN-Docs-Get({ "family": "australia", "path": "platform/some-page.md" })
 ```
 
 ## Notes
 
 - Docs sync does not use ServiceNow instance credentials.
+- Docs tools default to the `australia` family because the upstream ServiceNowDocs repository does not currently expose a `latest` branch.
 - Search is local-first once a family has been synced.
 - If a family is not synced, `SN-Docs-Search` returns a setup hint instead of failing hard.
 - `SN-Docs-Get` falls back to GitHub raw markdown when a document is not in the local cache.

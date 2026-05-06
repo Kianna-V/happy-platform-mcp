@@ -1,3 +1,5 @@
+import { createVectorIndex } from './vector-index.js';
+
 let databaseModulePromise;
 
 async function loadBetterSqlite3() {
@@ -25,9 +27,13 @@ export async function getSqliteAvailability() {
   }
 }
 
-export async function createDocsStore(dbPath, { Database = null } = {}) {
+export async function createDocsStore(dbPath, { Database = null, vectorConfig = null } = {}) {
   const DatabaseCtor = Database || await loadBetterSqlite3();
   const db = new DatabaseCtor(dbPath);
+  const vectorIndex = await createVectorIndex({
+    ...(vectorConfig || {}),
+    db
+  });
 
   return {
     initialize() {
@@ -98,6 +104,7 @@ export async function createDocsStore(dbPath, { Database = null } = {}) {
         `);
         const insertFts = db.prepare('INSERT INTO chunks_fts (rowid, title, heading, body) VALUES (?, ?, ?, ?)');
 
+        const indexedChunks = [];
         for (const chunk of chunks) {
           const result = insertChunk.run(
             row.id,
@@ -109,15 +116,21 @@ export async function createDocsStore(dbPath, { Database = null } = {}) {
             chunk.endLine,
             chunk.body
           );
-          insertFts.run(result.lastInsertRowid, chunk.title, chunk.heading, chunk.body);
+          const indexedChunk = {
+            ...chunk,
+            id: Number(result.lastInsertRowid)
+          };
+          indexedChunks.push(indexedChunk);
+          insertFts.run(indexedChunk.id, chunk.title, chunk.heading, chunk.body);
         }
+        vectorIndex.indexChunks(indexedChunks);
       });
 
       tx();
     },
 
     search({ query, family, limit = 10 }) {
-      return db.prepare(`
+      const ftsResults = () => db.prepare(`
         SELECT c.id, c.family, c.path, c.title, c.heading, c.start_line AS startLine,
                c.end_line AS endLine, snippet(chunks_fts, 2, '<mark>', '</mark>', '...', 20) AS snippet
         FROM chunks_fts
@@ -127,6 +140,20 @@ export async function createDocsStore(dbPath, { Database = null } = {}) {
         ORDER BY rank
         LIMIT ?
       `).all(query, family || null, family || null, limit);
+
+      if (!vectorIndex.available) {
+        return ftsResults();
+      }
+
+      const vectorResults = vectorIndex.search({ query, family, limit });
+      const seen = new Set(vectorResults.map((result) => result.id));
+      const merged = [...vectorResults];
+      for (const result of ftsResults()) {
+        if (!seen.has(result.id)) {
+          merged.push(result);
+        }
+      }
+      return merged.slice(0, limit);
     },
 
     getDocument({ family, path }) {
@@ -138,7 +165,8 @@ export async function createDocsStore(dbPath, { Database = null } = {}) {
       return {
         dbPath,
         ftsAvailable: true,
-        vectorAvailable: false,
+        vectorAvailable: vectorIndex.available,
+        vectorReason: vectorIndex.reason,
         families
       };
     },

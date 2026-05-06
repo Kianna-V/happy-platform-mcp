@@ -1291,7 +1291,7 @@ Submits a completed Service Catalog form via the ServiceNow Service Catalog REST
 
 ## ServiceNow Docs Search Tools
 
-These tools use the official `ServiceNow/ServiceNowDocs` markdown repository as the source of truth. Live GitHub discovery/get work without local indexing. Local sync is optional, disabled by default, and builds a SQLite FTS5 index under `~/.happy-platform-mcp/docs/servicenow` when `docs.localIndexEnabled=true` or `HAPPY_DOCS_ENABLE_LOCAL_INDEX=true`. Vector mode is opt-in and disabled unless configured.
+These tools use the official `ServiceNow/ServiceNowDocs` markdown repository as the source of truth. Live GitHub discovery/get work without local indexing. Local sync is optional, disabled by default, and builds a SQLite FTS5 index under `~/.happy-platform-mcp/docs/servicenow` when `docs.localIndexEnabled=true` or `HAPPY_DOCS_ENABLE_LOCAL_INDEX=true`. Vector mode is opt-in: set `docs.enableVector=true` or `HAPPY_DOCS_ENABLE_VECTOR=true` with `embeddingProvider=local` to build and query a sqlite-vec index using deterministic local embeddings.
 
 ### SN-Docs-Families
 
@@ -1321,13 +1321,13 @@ Shows local docs cache and index status.
 
 ### SN-Docs-Sync
 
-Downloads and indexes a ServiceNowDocs family into the local SQLite FTS cache.
+Downloads and indexes a ServiceNowDocs family into the local SQLite FTS cache. Defaults to the `australia` family/branch when omitted.
 
 **Parameters:**
 ```javascript
 {
-  "family": "latest",      // Required: family name
-  "branch": "latest"       // Optional: GitHub branch, defaults to family
+  "family": "australia",   // Optional: family name, defaults to australia
+  "branch": "australia"    // Optional: GitHub branch, defaults to family
 }
 ```
 
@@ -1337,13 +1337,13 @@ Downloads and indexes a ServiceNowDocs family into the local SQLite FTS cache.
 
 ### SN-Docs-Search
 
-Searches locally synced ServiceNowDocs markdown using SQLite FTS5.
+Searches locally synced ServiceNowDocs markdown using SQLite FTS5. Defaults to the `australia` family when omitted.
 
 **Parameters:**
 ```javascript
 {
   "query": "create a Flow Designer action", // Required
-  "family": "latest",                       // Optional
+  "family": "australia",                    // Optional, defaults to australia
   "limit": 10                               // Optional
 }
 ```
@@ -1354,12 +1354,12 @@ Searches locally synced ServiceNowDocs markdown using SQLite FTS5.
 
 ### SN-Docs-Get
 
-Retrieves a ServiceNowDocs markdown document by family and path. Reads from the local cache first, then falls back to GitHub raw markdown.
+Retrieves a ServiceNowDocs markdown document by family and path. Reads from the local cache first, then falls back to GitHub raw markdown. Defaults to the `australia` family when omitted.
 
 **Parameters:**
 ```javascript
 {
-  "family": "latest",
+  "family": "australia",
   "path": "platform/example.md"
 }
 ```

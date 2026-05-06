@@ -35,6 +35,7 @@ scripts/
 .claude/
 .claude-flow/
 CLAUDE.md
+AGENTS.md
 
 # Setup artifacts
 setup/

@@ -8,9 +8,9 @@
   "instances": [
     {
       "name": "dev",
-      "url": "https://dev276360.service-now.com",
-      "username": "admin",
-      "password": "$h4fG+9nAGeU",
+      "url": "https://your-dev-instance.service-now.com",
+      "username": "your_dev_username",
+      "password": "your_dev_password",
       "default": true,
       "description": "Development instance"
     },
@@ -24,7 +24,7 @@
     },
     {
       "name": "test",
-      "url": "https://test123456.service-now.com",
+      "url": "https://your-test-instance.service-now.com",
       "username": "test_user",
       "password": "test_password",
       "default": false,
@@ -32,7 +32,7 @@
     },
     {
       "name": "staging-oauth",
-      "url": "https://staging789.service-now.com",
+      "url": "https://your-staging-instance.service-now.com",
       "authType": "oauth",
       "grantType": "client_credentials",
       "clientId": "your_oauth_client_id",

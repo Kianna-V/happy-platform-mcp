@@ -27,7 +27,7 @@ describe('syncDocsFamily', () => {
   test('parses markdown links from relative and raw GitHub URLs', () => {
     const links = parseMarkdownLinks(`
 - [Relative](platform/relative.md)
-- [Raw](https://raw.githubusercontent.com/ServiceNow/ServiceNowDocs/latest/platform/raw.md)
+- [Raw](https://raw.githubusercontent.com/ServiceNow/ServiceNowDocs/australia/platform/raw.md)
 - [Duplicate](platform/relative.md)
 `);
 

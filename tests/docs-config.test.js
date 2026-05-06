@@ -12,6 +12,7 @@ const originalEnv = { ...process.env };
 
 beforeEach(() => {
   process.env = { ...originalEnv };
+  process.env.HAPPY_CONFIG_PATH = path.join(os.tmpdir(), `happy-docs-missing-${process.pid}.json`);
 });
 
 afterEach(() => {
