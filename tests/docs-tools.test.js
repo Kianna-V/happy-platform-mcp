@@ -36,6 +36,20 @@ describe('docs MCP tools', () => {
     ]);
   });
 
+  test('can expose only docs tools without a ServiceNow client', async () => {
+    const server = await createMcpServer(null, { docsOnly: true });
+    const handler = server._requestHandlers.get('tools/list');
+    const result = await handler({ method: 'tools/list', params: {} }, {});
+
+    expect(result.tools.map((tool) => tool.name)).toEqual([
+      'SN-Docs-Families',
+      'SN-Docs-Status',
+      'SN-Docs-Sync',
+      'SN-Docs-Search',
+      'SN-Docs-Get'
+    ]);
+  });
+
   test('defaults docs sync to the australia branch', async () => {
     const cacheDir = await fs.mkdtemp(path.join(os.tmpdir(), 'happy-docs-default-'));
     const client = {

@@ -33,26 +33,44 @@ export async function syncDocsFamily({ family, branch, cacheDir, client, vectorC
   store.upsertFamily({ name: family, branch, syncedAt: new Date().toISOString() });
 
   let documentsSynced = 0;
+  const skippedDocuments = [];
   try {
     for (const link of links) {
-      const markdown = await client.getMarkdown(branch, link);
-      const outputPath = resolveDocsCachePath(cacheDir, path.posix.join(family, link));
-      await fs.mkdir(path.dirname(outputPath), { recursive: true });
-      await fs.writeFile(outputPath, markdown, 'utf8');
+      try {
+        const markdown = await client.getMarkdown(branch, link);
+        const outputPath = resolveDocsCachePath(cacheDir, path.posix.join(family, link));
+        await fs.mkdir(path.dirname(outputPath), { recursive: true });
+        await fs.writeFile(outputPath, markdown, 'utf8');
 
-      const chunks = chunkMarkdown({ family, path: link, markdown });
-      store.replaceDocument({
-        family,
-        path: link,
-        sha: null,
-        title: chunks[0]?.title || link,
-        markdown
-      }, chunks);
-      documentsSynced += 1;
+        const chunks = chunkMarkdown({ family, path: link, markdown });
+        store.replaceDocument({
+          family,
+          path: link,
+          sha: null,
+          title: chunks[0]?.title || link,
+          markdown
+        }, chunks);
+        documentsSynced += 1;
+      } catch (error) {
+        skippedDocuments.push({
+          path: link,
+          error: error.message
+        });
+      }
     }
   } finally {
     store.close();
   }
 
-  return { family, branch, documentsSynced };
+  if (documentsSynced === 0 && skippedDocuments.length > 0) {
+    throw new Error(`ServiceNow docs sync failed: all ${skippedDocuments.length} documents were skipped`);
+  }
+
+  return {
+    family,
+    branch,
+    documentsSynced,
+    documentsSkipped: skippedDocuments.length,
+    skippedDocuments
+  };
 }

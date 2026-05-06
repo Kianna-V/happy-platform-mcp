@@ -8,6 +8,7 @@
  */
 
 import dotenv from 'dotenv';
+import { pathToFileURL } from 'url';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { ServiceNowClient } from './servicenow-client.js';
 import { createMcpServer } from './mcp-server-consolidated.js';
@@ -16,31 +17,86 @@ import { configManager } from './config-manager.js';
 // Load environment variables
 dotenv.config();
 
-async function main() {
+function booleanEnv(value) {
+  return ['true', '1', 'yes'].includes(String(value || '').toLowerCase());
+}
+
+function hasServiceNowEnvCredentials(env = process.env) {
+  return Boolean(env.SERVICENOW_INSTANCE_URL && env.SERVICENOW_USERNAME && env.SERVICENOW_PASSWORD);
+}
+
+export function shouldUseDocsOnlyMode(env = process.env) {
+  return booleanEnv(env.HAPPY_MCP_DOCS_ONLY);
+}
+
+function docsOnlyExplicitlyDisabled(env = process.env) {
+  return String(env.HAPPY_MCP_DOCS_ONLY || '').toLowerCase() === 'false';
+}
+
+function shouldFallbackToDocsOnly(error, env = process.env) {
+  return !docsOnlyExplicitlyDisabled(env) &&
+    !hasServiceNowEnvCredentials(env) &&
+    /Missing ServiceNow credentials|servicenow-instances\.json not found/i.test(error.message);
+}
+
+export async function createConfiguredMcpServer({
+  env = process.env,
+  manager = configManager,
+  ServiceNowClientClass = ServiceNowClient,
+  createServer = createMcpServer
+} = {}) {
+  const startDocsOnly = async () => {
+    console.error('📚 Starting Happy MCP in docs-only mode');
+    return {
+      server: await createServer(null, { docsOnly: true }),
+      docsOnly: true,
+      instance: null
+    };
+  };
+
+  if (shouldUseDocsOnlyMode(env)) {
+    return startDocsOnly();
+  }
+
+  // Get instance configuration (from SERVICENOW_INSTANCE env var or default)
+  let instance;
   try {
-    // Get instance configuration (from SERVICENOW_INSTANCE env var or default)
-    const instance = configManager.getInstanceOrDefault(process.env.SERVICENOW_INSTANCE);
+    instance = manager.getInstanceOrDefault(env.SERVICENOW_INSTANCE);
+  } catch (error) {
+    if (shouldFallbackToDocsOnly(error, env)) {
+      return startDocsOnly();
+    }
+    throw error;
+  }
 
-    console.error(`🔗 Default ServiceNow instance: ${instance.name} (${instance.url})`);
-    console.error(`💡 Use SN-Set-Instance tool to switch instances during session`);
+  console.error(`🔗 Default ServiceNow instance: ${instance.name} (${instance.url})`);
+  console.error(`💡 Use SN-Set-Instance tool to switch instances during session`);
 
-    // Create ServiceNow client
-    const serviceNowClient = new ServiceNowClient(
-      instance.url,
-      instance.username,
-      instance.password,
-      {
-        authType: instance.authType || 'basic',
-        clientId: instance.clientId,
-        clientSecret: instance.clientSecret,
-        grantType: instance.grantType,
-        scope: instance.scope
-      }
-    );
-    serviceNowClient.currentInstanceName = instance.name;
+  // Create ServiceNow client
+  const serviceNowClient = new ServiceNowClientClass(
+    instance.url,
+    instance.username,
+    instance.password,
+    {
+      authType: instance.authType || 'basic',
+      clientId: instance.clientId,
+      clientSecret: instance.clientSecret,
+      grantType: instance.grantType,
+      scope: instance.scope
+    }
+  );
+  serviceNowClient.currentInstanceName = instance.name;
 
-    // Create MCP server with all tools
-    const server = await createMcpServer(serviceNowClient);
+  return {
+    server: await createServer(serviceNowClient),
+    docsOnly: false,
+    instance
+  };
+}
+
+export async function main() {
+  try {
+    const { server, docsOnly, instance } = await createConfiguredMcpServer();
 
     // Create stdio transport
     const transport = new StdioServerTransport();
@@ -49,11 +105,18 @@ async function main() {
     await server.connect(transport);
 
     console.error('Happy MCP Server (stdio) started successfully');
-    console.error(`Instance: ${instance.name} - ${instance.url}`);
+    if (docsOnly) {
+      console.error('Mode: docs-only');
+    } else {
+      console.error(`Instance: ${instance.name} - ${instance.url}`);
+    }
   } catch (error) {
     console.error('Failed to start Happy MCP Server:', error);
     process.exit(1);
   }
 }
 
-main();
+const isDirectRun = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isDirectRun) {
+  main();
+}

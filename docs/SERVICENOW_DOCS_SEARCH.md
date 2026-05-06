@@ -15,6 +15,7 @@ HAPPY_DOCS_ENABLE_LOCAL_INDEX=false
 HAPPY_DOCS_CACHE_DIR=~/.happy-platform-mcp/docs/servicenow
 HAPPY_DOCS_ENABLE_VECTOR=false
 HAPPY_DOCS_EMBEDDING_PROVIDER=none  # use local to enable deterministic local embeddings
+HAPPY_MCP_DOCS_ONLY=false
 GITHUB_TOKEN=optional-token-for-higher-rate-limits
 ```
 
@@ -33,6 +34,8 @@ The same system properties can live in `config/servicenow-instances.json`:
 ```
 
 `better-sqlite3` and `sqlite-vec` are optional npm dependencies. Live GitHub docs tools do not require them. Local sync/search requires `better-sqlite3` and `localIndexEnabled=true`. Vector search additionally requires `enableVector=true` and `embeddingProvider=local`; when sqlite-vec is unavailable, status reports the reason and FTS search continues to work.
+
+Set `HAPPY_MCP_DOCS_ONLY=true` to expose only `SN-Docs-*` tools without ServiceNow credentials. The stdio server also falls back to docs-only mode when neither a ServiceNow config file nor ServiceNow environment credentials are present.
 
 ## Tools
 
@@ -56,6 +59,7 @@ SN-Docs-Get({ "family": "australia", "path": "platform/some-page.md" })
 
 - Docs sync does not use ServiceNow instance credentials.
 - Docs tools default to the `australia` family because the upstream ServiceNowDocs repository does not currently expose a `latest` branch.
+- Docs sync skips broken markdown links, reports `documentsSkipped`, and continues as long as at least one document syncs successfully.
 - Search is local-first once a family has been synced.
 - If a family is not synced, `SN-Docs-Search` returns a setup hint instead of failing hard.
 - `SN-Docs-Get` falls back to GitHub raw markdown when a document is not in the local cache.

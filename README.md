@@ -242,6 +242,8 @@ SN-Docs-Get({ "family": "australia", "path": "platform/example.md" })
 
 SQLite local indexing is optional and disabled by default. Vector search is also optional; enable local indexing, set `HAPPY_DOCS_ENABLE_VECTOR=true`, and use `HAPPY_DOCS_EMBEDDING_PROVIDER=local` to build a sqlite-vec index with deterministic local embeddings. See [ServiceNow Docs Search](docs/SERVICENOW_DOCS_SEARCH.md).
 
+For docs-only deployments without ServiceNow credentials, set `HAPPY_MCP_DOCS_ONLY=true`. If no config file or ServiceNow environment credentials are present, the stdio server falls back to docs-only mode automatically.
+
 ## Claude Desktop Integration
 
 Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:

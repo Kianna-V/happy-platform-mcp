@@ -24,6 +24,39 @@ describe('syncDocsFamily', () => {
       .toContain('Create actions');
   });
 
+  test('skips broken markdown links and continues syncing remaining docs', async () => {
+    const cacheDir = await fs.mkdtemp(path.join(os.tmpdir(), 'happy-docs-sync-'));
+    const client = {
+      getLlms: jest.fn().mockResolvedValue(`
+- [Broken](platform/broken.md)
+- [Flow Designer](platform/flow-designer.md)
+`),
+      getMarkdown: jest.fn()
+        .mockRejectedValueOnce(new Error('GitHub request failed (404 Not Found)'))
+        .mockResolvedValueOnce('# Flow Designer\n\nCreate actions.')
+    };
+
+    const result = await syncDocsFamily({
+      family: 'australia',
+      branch: 'australia',
+      cacheDir,
+      client
+    });
+
+    expect(result).toMatchObject({
+      family: 'australia',
+      branch: 'australia',
+      documentsSynced: 1,
+      documentsSkipped: 1
+    });
+    expect(result.skippedDocuments).toEqual([{
+      path: 'platform/broken.md',
+      error: 'GitHub request failed (404 Not Found)'
+    }]);
+    expect(await fs.readFile(path.join(cacheDir, 'australia', 'platform', 'flow-designer.md'), 'utf8'))
+      .toContain('Create actions');
+  });
+
   test('parses markdown links from relative and raw GitHub URLs', () => {
     const links = parseMarkdownLinks(`
 - [Relative](platform/relative.md)

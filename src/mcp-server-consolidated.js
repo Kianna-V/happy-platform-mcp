@@ -15,7 +15,8 @@ import { parseNaturalLanguage, getSupportedPatterns } from './natural-language.j
 import { docsToolDefinitions } from './docs/tool-definitions.js';
 import { handleDocsTool } from './docs/tool-handlers.js';
 
-export async function createMcpServer(serviceNowClient) {
+export async function createMcpServer(serviceNowClient, options = {}) {
+  const docsOnly = options.docsOnly === true;
   const server = new Server(
     {
       name: 'servicenow-server',
@@ -31,18 +32,20 @@ export async function createMcpServer(serviceNowClient) {
   );
 
   // Set up progress callback for ServiceNow client
-  serviceNowClient.setProgressCallback((message) => {
-    try {
-      server.notification({
-        method: 'notifications/progress',
-        params: {
-          progress: message
-        }
-      });
-    } catch (error) {
-      console.error('Failed to send progress notification:', error.message);
-    }
-  });
+  if (serviceNowClient?.setProgressCallback) {
+    serviceNowClient.setProgressCallback((message) => {
+      try {
+        server.notification({
+          method: 'notifications/progress',
+          params: {
+            progress: message
+          }
+        });
+      } catch (error) {
+        console.error('Failed to send progress notification:', error.message);
+      }
+    });
+  }
 
   // Load table metadata
   let tableMetadata = {};
@@ -66,6 +69,11 @@ export async function createMcpServer(serviceNowClient) {
   // Set up consolidated tool handlers
   server.setRequestHandler(ListToolsRequestSchema, async () => {
     console.error(`📋 Tool list requested by Claude Code`);
+
+    if (docsOnly) {
+      console.error(`✅ Returning ${docsToolDefinitions.length} docs-only tools to Claude Code`);
+      return { tools: docsToolDefinitions };
+    }
 
     const tools = [
       {
@@ -1370,6 +1378,10 @@ export async function createMcpServer(serviceNowClient) {
     try {
       if (name.startsWith('SN-Docs-')) {
         return await handleDocsTool(name, args);
+      }
+
+      if (docsOnly) {
+        throw new Error(`Tool ${name} is unavailable in docs-only mode`);
       }
 
       switch (name) {

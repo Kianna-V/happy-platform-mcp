@@ -6,12 +6,12 @@
     "url": "https://github.com/Happy-Technologies-LLC/happy-platform-mcp",
     "source": "github"
   },
-  "version": "3.2.1",
+  "version": "3.2.2",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "happy-platform-mcp",
-      "version": "3.2.1",
+      "version": "3.2.2",
       "transport": {
         "type": "stdio"
       },
@@ -50,6 +50,13 @@
           "format": "string",
           "isSecret": false,
           "name": "SERVICENOW_INSTANCE"
+        },
+        {
+          "description": "Start with only ServiceNowDocs tools. Use true for docs-only deployments without ServiceNow credentials.",
+          "isRequired": false,
+          "format": "boolean",
+          "isSecret": false,
+          "name": "HAPPY_MCP_DOCS_ONLY"
         },
         {
           "description": "Enable optional local SQLite FTS indexing for ServiceNowDocs search",

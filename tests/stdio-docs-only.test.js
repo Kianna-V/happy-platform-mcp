@@ -1,0 +1,97 @@
+import { describe, expect, jest, test } from '@jest/globals';
+import {
+  createConfiguredMcpServer,
+  shouldUseDocsOnlyMode
+} from '../src/stdio-server.js';
+
+describe('stdio docs-only startup', () => {
+  test('uses docs-only mode when explicitly enabled', () => {
+    expect(shouldUseDocsOnlyMode({ HAPPY_MCP_DOCS_ONLY: 'true' })).toBe(true);
+  });
+
+  test('does not use docs-only mode when ServiceNow credentials are present', () => {
+    expect(shouldUseDocsOnlyMode({
+      SERVICENOW_INSTANCE_URL: 'https://example.service-now.com',
+      SERVICENOW_USERNAME: 'admin',
+      SERVICENOW_PASSWORD: 'password'
+    })).toBe(false);
+  });
+
+  test('does not force docs-only mode solely because env credentials are absent', () => {
+    expect(shouldUseDocsOnlyMode({})).toBe(false);
+  });
+
+  test('creates docs-only MCP server without reading ServiceNow config', async () => {
+    const manager = {
+      getInstanceOrDefault: jest.fn(() => {
+        throw new Error('should not load ServiceNow config');
+      })
+    };
+    const createServer = jest.fn(async () => ({ id: 'server' }));
+
+    const result = await createConfiguredMcpServer({
+      env: { HAPPY_MCP_DOCS_ONLY: 'true' },
+      manager,
+      createServer
+    });
+
+    expect(result).toMatchObject({ docsOnly: true, instance: null });
+    expect(manager.getInstanceOrDefault).not.toHaveBeenCalled();
+    expect(createServer).toHaveBeenCalledWith(null, { docsOnly: true });
+  });
+
+  test('falls back to docs-only mode when ServiceNow config and env credentials are missing', async () => {
+    const manager = {
+      getInstanceOrDefault: jest.fn(() => {
+        throw new Error('Missing ServiceNow credentials. Create config/servicenow-instances.json or set SERVICENOW_INSTANCE_URL, SERVICENOW_USERNAME, SERVICENOW_PASSWORD in .env');
+      })
+    };
+    const createServer = jest.fn(async () => ({ id: 'server' }));
+
+    const result = await createConfiguredMcpServer({
+      env: {},
+      manager,
+      createServer
+    });
+
+    expect(result).toMatchObject({ docsOnly: true, instance: null });
+    expect(manager.getInstanceOrDefault).toHaveBeenCalledWith(undefined);
+    expect(createServer).toHaveBeenCalledWith(null, { docsOnly: true });
+  });
+
+  test('creates full MCP server when ServiceNow credentials are configured', async () => {
+    const instance = {
+      name: 'dev',
+      url: 'https://example.service-now.com',
+      username: 'admin',
+      password: 'password',
+      default: true
+    };
+    const manager = {
+      getInstanceOrDefault: jest.fn(() => instance)
+    };
+    const ServiceNowClientClass = jest.fn(function ServiceNowClientMock() {});
+    const createServer = jest.fn(async () => ({ id: 'server' }));
+
+    const result = await createConfiguredMcpServer({
+      env: {
+        SERVICENOW_INSTANCE_URL: instance.url,
+        SERVICENOW_USERNAME: instance.username,
+        SERVICENOW_PASSWORD: instance.password
+      },
+      manager,
+      ServiceNowClientClass,
+      createServer
+    });
+
+    expect(result).toMatchObject({ docsOnly: false, instance });
+    expect(manager.getInstanceOrDefault).toHaveBeenCalledWith(undefined);
+    expect(ServiceNowClientClass).toHaveBeenCalledWith(
+      instance.url,
+      instance.username,
+      instance.password,
+      expect.objectContaining({ authType: 'basic' })
+    );
+    expect(createServer).toHaveBeenCalledWith(expect.any(ServiceNowClientClass));
+  });
+});

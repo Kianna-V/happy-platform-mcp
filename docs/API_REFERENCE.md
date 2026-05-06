@@ -1321,7 +1321,7 @@ Shows local docs cache and index status.
 
 ### SN-Docs-Sync
 
-Downloads and indexes a ServiceNowDocs family into the local SQLite FTS cache. Defaults to the `australia` family/branch when omitted.
+Downloads and indexes a ServiceNowDocs family into the local SQLite FTS cache. Defaults to the `australia` family/branch when omitted. Broken markdown links are skipped and reported while the sync continues.
 
 **Parameters:**
 ```javascript
@@ -1331,7 +1331,7 @@ Downloads and indexes a ServiceNowDocs family into the local SQLite FTS cache. D
 }
 ```
 
-**Returns:** Sync summary including family, branch, and document count.
+**Returns:** Sync summary including family, branch, `documentsSynced`, `documentsSkipped`, and skipped document details.
 
 ---
 
