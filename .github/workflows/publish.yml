@@ -9,6 +9,15 @@ on:
       - 'src/**'
       - 'Dockerfile'
   workflow_dispatch:
+    inputs:
+      npm_publish_mode:
+        description: 'npm publish authentication mode'
+        required: true
+        default: trusted
+        type: choice
+        options:
+          - trusted
+          - token
 
 permissions:
   contents: read
@@ -19,6 +28,7 @@ jobs:
     outputs:
       version: ${{ steps.package-version.outputs.version }}
       should-publish: ${{ steps.check.outputs.should-publish }}
+      npm_publish_mode: ${{ steps.publish-mode.outputs.mode }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -40,6 +50,15 @@ jobs:
           else
             echo "should-publish=false" >> $GITHUB_OUTPUT
             echo "Version unchanged, skipping publish"
+          fi
+
+      - name: Select npm publish mode
+        id: publish-mode
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "mode=${{ inputs.npm_publish_mode }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=trusted" >> "$GITHUB_OUTPUT"
           fi
 
   test:
@@ -75,20 +94,30 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
           cache: 'npm'
+
+      - name: Use npm with trusted publishing support
+        if: needs.check-version.outputs.npm_publish_mode == 'trusted'
+        run: npm install -g 'npm@^11.5.1'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Verify npm authentication
+      - name: Verify npm token authentication
+        if: needs.check-version.outputs.npm_publish_mode == 'token'
         run: npm whoami
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish to npm (token auth with provenance)
-        run: npm publish --provenance --access public
+      - name: Publish to npm with trusted publishing
+        if: needs.check-version.outputs.npm_publish_mode == 'trusted'
+        run: npm publish --access public
+
+      - name: Publish to npm with token fallback
+        if: needs.check-version.outputs.npm_publish_mode == 'token'
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 

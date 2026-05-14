@@ -7,9 +7,21 @@ This project uses GitHub Actions for automated publishing to npm and Docker Hub.
 Configure the following secrets in your GitHub repository settings:
 
 ### npm Publishing
+
+Preferred setup: configure npm Trusted Publishing for this package. Trusted Publishing lets GitHub Actions publish with OIDC instead of a long-lived token, so CI does not need an npm one-time password.
+
+Configure the package on npmjs.com with this trusted publisher:
+
+- Provider: GitHub Actions
+- Organization: `Happy-Technologies-LLC`
+- Repository: `happy-platform-mcp`
+- Workflow filename: `publish.yml`
+
+Fallback setup: keep **NPM_TOKEN** configured for manual workflow runs that explicitly select token publishing.
+
 1. **NPM_TOKEN**
    - Go to https://www.npmjs.com/settings/YOUR_USERNAME/tokens
-   - Create a new "Automation" token
+   - Create a granular automation token with publish access for `happy-platform-mcp`
    - Copy the token and add it to GitHub Secrets as `NPM_TOKEN`
 
 ### Docker Hub Publishing
@@ -37,7 +49,8 @@ Configure the following secrets in your GitHub repository settings:
 - Only publishes when `package.json` version number changes
 - Runs tests before publishing
 - Performs security audit
-- Publishes to npm with provenance
+- Publishes to npm through Trusted Publishing by default
+- Supports a manual token fallback through `workflow_dispatch`
 - Publishes to Docker Hub (multi-platform: amd64, arm64)
 - Creates GitHub Release with tag
 - Updates Docker Hub repository description
@@ -149,10 +162,13 @@ gh run watch
 ## Troubleshooting
 
 ### npm Publish Fails
-- Verify `NPM_TOKEN` is set and valid
+- For default trusted publishing, verify the npm package has a trusted publisher configured for `Happy-Technologies-LLC/happy-platform-mcp` and workflow `publish.yml`
+- Confirm the workflow runs on a GitHub-hosted runner and has `id-token: write`
+- For manual token fallback, verify `NPM_TOKEN` is set, valid, and is a granular automation token that can publish without OTP
 - Ensure version number increased
 - Check package name is available on npm
 - Verify you have publish permissions
+- `EOTP` means npm is asking for an interactive one-time password; use Trusted Publishing or replace the secret with an automation token that is allowed to publish without OTP
 
 ### Docker Push Fails
 - Verify `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` are set
@@ -172,11 +188,12 @@ gh run watch
 
 ## Security Best Practices
 
-1. **Use Automation Tokens**: Use dedicated automation tokens, not personal access tokens
-2. **Rotate Tokens**: Rotate tokens every 90 days
-3. **Minimal Permissions**: Grant only necessary permissions
-4. **Monitor Runs**: Regularly check workflow run logs
-5. **Security Scanning**: Workflows include automated security audits
+1. **Prefer Trusted Publishing**: Use npm Trusted Publishing for CI releases so GitHub Actions publishes with short-lived OIDC credentials.
+2. **Limit Token Use**: Keep `NPM_TOKEN` only as a fallback, and use a granular automation token if needed.
+3. **Rotate Tokens**: Rotate fallback tokens every 90 days.
+4. **Minimal Permissions**: Grant only necessary permissions.
+5. **Monitor Runs**: Regularly check workflow run logs.
+6. **Security Scanning**: Workflows include automated security audits.
 
 ## Multi-Platform Docker Builds
 
