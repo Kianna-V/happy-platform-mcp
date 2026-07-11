@@ -9,6 +9,8 @@ node_modules/
 
 # ServiceNow instance credentials (DO NOT COMMIT)
 config/servicenow-instances.json
+config/servicenow-instances.json.STALE-BACKUP
+config/*.STALE-BACKUP
 
 # Generated fix scripts (should not be committed)
 scripts/
